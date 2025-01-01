@@ -54,6 +54,15 @@ RUN apt update \
  && make njs \
  && cd ../
 
+FROM ubuntu:latest AS dhparam_builder
+ENV DEBIAN_FRONTEND noninteractive
+ENV LS_COLORS di=01;36
+WORKDIR /app
+#RUN --mount=type=cache,target=/var/lib/apt/lists --mount=type=cache,target=/var/cache/apt/archives \
+# apt update \
+RUN apt update \
+ && apt install -y --no-install-recommends  build-essential ca-certificates openssl \
+ && openssl dhparam -out dhparam.pem 4096
 
 FROM ubuntu:latest AS nginx_builder
 ENV DEBIAN_FRONTEND noninteractive
@@ -89,7 +98,7 @@ RUN --mount=type=cache,target=/var/lib/apt/lists --mount=type=cache,target=/var/
  && install -m 0755 -d /etc/nginx/vhosts.d \
  && install -m 0755 -d /etc/nginx/modules.d \
  && install -m 0755 -d /var/nginx/www/vhosts \
- && install -m 0755 -d /var/nginx/acme-challenge \
+ && install -m 0755 -d /var/nginx/www/acme-challenge \
  && install -m 0644 /app/nginx.conf /etc/nginx/nginx.conf \
  && install -m 0644 /app/modules.conf /etc/nginx/modules.conf \
  && install -m 0644 /app/modules.d/*.conf /etc/nginx/modules.d/ \
@@ -102,12 +111,15 @@ RUN --mount=type=cache,target=/var/lib/apt/lists --mount=type=cache,target=/var/
 FROM ubuntu:latest AS nginx_executor
 ENV DEBIAN_FRONTEND noninteractive
 ENV LS_COLORS di=01;36
+COPY ./app/entry.sh /app/entry.sh
 COPY --from=njs_builder   /app/njs/build/njs /usr/bin/njs
 COPY --from=nginx_builder /usr/sbin/nginx /usr/sbin/nginx
 COPY --from=nginx_builder /usr/share/nginx /usr/share/nginx
 COPY --from=nginx_builder /usr/lib/nginx /usr/lib/nginx
 COPY --from=nginx_builder /etc/nginx /etc/nginx
 COPY --from=nginx_builder /var/nginx /var/nginx
+COPY --from=dhparam_builder   /app/dhparam.pem /etc/nginx/ssl/dhparam.pem
+WORKDIR /app
 RUN --mount=type=cache,target=/var/lib/apt/lists --mount=type=cache,target=/var/cache/apt/archives \
  apt update \
  && apt install -y --no-install-recommends ca-certificates libpcre3 libxslt1.1 libedit2 \
@@ -118,7 +130,9 @@ RUN --mount=type=cache,target=/var/lib/apt/lists --mount=type=cache,target=/var/
  && echo ">>> install nginx" \
  && mkdir /var/lib/nginx /var/log/nginx \
  && chmod 700 /var/lib/nginx /var/log/nginx \
+ && chmod 755 /app/entry.sh \
  && cd /var/log/nginx \
  && ln -s /proc/self/fd/1 access.log \
- && ln -s /proc/self/fd/2 error.log 
-CMD [ "/usr/sbin/nginx", "-g", "daemon off;" ]
+ && ln -s /proc/self/fd/2 error.log  
+#CMD [ "/usr/sbin/nginx", "-g", "daemon off;" ]
+CMD [ "/app/entry.sh" ]
