@@ -111,7 +111,7 @@ RUN --mount=type=cache,target=/var/lib/apt/lists --mount=type=cache,target=/var/
 FROM ubuntu:latest AS nginx_executor
 ENV DEBIAN_FRONTEND noninteractive
 ENV LS_COLORS di=01;36
-COPY ./app/entry.sh /app/entry.sh
+COPY ./app/entrypoint.sh /app/entrypoint.sh
 COPY --from=njs_builder   /app/njs/build/njs /usr/bin/njs
 COPY --from=nginx_builder /usr/sbin/nginx /usr/sbin/nginx
 COPY --from=nginx_builder /usr/share/nginx /usr/share/nginx
@@ -130,9 +130,9 @@ RUN --mount=type=cache,target=/var/lib/apt/lists --mount=type=cache,target=/var/
  && echo ">>> install nginx" \
  && mkdir /var/lib/nginx /var/log/nginx \
  && chmod 700 /var/lib/nginx /var/log/nginx \
- && chmod 755 /app/entry.sh \
+ && chmod 755 /app/entrypoint.sh \
  && cd /var/log/nginx \
  && ln -s /proc/self/fd/1 access.log \
  && ln -s /proc/self/fd/2 error.log  
 #CMD [ "/usr/sbin/nginx", "-g", "daemon off;" ]
-CMD [ "/app/entry.sh" ]
+CMD [ "/app/entrypoint.sh" ]
