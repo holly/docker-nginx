@@ -7,7 +7,7 @@ set -C
 
 NGINX_CMD=/usr/sbin/nginx
 SLEEP_INTERVAL=86400
-trap "$NGINX_CMD -s stop; sleep 3; echo nginx stopped." 1 2 3 15
+trap "$NGINX_CMD -s stop; echo nginx stopped." 1 2 3 15
 
 {
     while true; do
