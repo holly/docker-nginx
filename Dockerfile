@@ -61,7 +61,8 @@ WORKDIR /app
 # apt update \
 RUN apt update \
  && apt install -y --no-install-recommends  build-essential ca-certificates openssl \
- && openssl dhparam -out dhparam.pem 4096
+ && openssl dhparam -out dhparam.pem 4096 \
+ && openssl rand -out quic_host_key 16
 
 FROM ubuntu:latest AS nginx_builder
 ENV DEBIAN_FRONTEND noninteractive
@@ -117,6 +118,7 @@ COPY --from=nginx_builder /usr/lib/nginx /usr/lib/nginx
 COPY --from=nginx_builder /etc/nginx /etc/nginx
 COPY --from=nginx_builder /var/nginx /var/nginx
 COPY --from=dhparam_builder   /app/dhparam.pem /etc/nginx/ssl/dhparam.pem
+COPY --from=dhparam_builder   /app/quic_host_key /etc/nginx/ssl/quic_host_key
 WORKDIR /app
 RUN --mount=type=cache,target=/var/lib/apt/lists --mount=type=cache,target=/var/cache/apt/archives \
  apt update \
