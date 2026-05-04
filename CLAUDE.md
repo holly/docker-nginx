@@ -25,6 +25,8 @@
 
 @.claude/commands/build.md — build.sh の詳細（ビルドプロセス、トラブルシューティング）
 
+@.claude/skills/build-and-diagnose/SKILL.md — Docker ビルド実行・出力監視・エラー診断・修正提案
+
 @.claude/commands/push.md — push.sh の詳細（レジストリプッシュ、認証設定）
 
 @.claude/commands/run.md — run.sh の詳細（GeoIP 更新、ポートマッピング、ライフサイクル）
