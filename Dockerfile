@@ -37,22 +37,6 @@ RUN apt update \
  && git clone --recursive https://github.com/openssl/openssl 
 
 
-FROM ubuntu:latest AS njs_builder
-ENV DEBIAN_FRONTEND=noninteractive
-ENV LS_COLORS=di=01;36
-WORKDIR /app
-#RUN --mount=type=cache,target=/var/lib/apt/lists --mount=type=cache,target=/var/cache/apt/archives \
-# apt update \
-RUN apt update \
- && apt install -y --no-install-recommends  build-essential ca-certificates mercurial git libpcre2-dev libpcre3-dev libedit-dev libssl-dev \
-# && hg clone http://hg.nginx.org/njs \
- && git clone https://github.com/nginx/njs \
- && cd njs \
- && ./configure \
- && make \
- && make njs \
- && cd ../
-
 FROM ubuntu:latest AS dhparam_builder
 ENV DEBIAN_FRONTEND=noninteractive
 ENV LS_COLORS=di=01;36
@@ -70,7 +54,6 @@ ENV LS_COLORS=di=01;36
 COPY --from=geoip2_builder /app/ngx_http_geoip2_module /app/ngx_http_geoip2_module
 COPY --from=brotli_builder /app/ngx_brotli /app/ngx_brotli
 COPY --from=openssl_builder /app/openssl /app/openssl
-COPY --from=njs_builder /app/njs /app/njs
 COPY ./app/nginx.conf /app/nginx.conf
 COPY ./app/modules.conf /app/modules.conf
 COPY ./app/modules.d /app/modules.d
@@ -84,6 +67,8 @@ RUN --mount=type=cache,target=/var/lib/apt/lists --mount=type=cache,target=/var/
  && add-apt-repository ppa:maxmind/ppa \
  && apt update \
  && apt install -y --no-install-recommends libmaxminddb-dev libmaxminddb0 mmdb-bin \
+ && echo ">>> build njs with custom OpenSSL" \
+ && git clone https://github.com/nginx/njs \
  && echo ">>> build nginx" \
  && hg clone http://freenginx.org/hg/nginx \
  && cd nginx  \
