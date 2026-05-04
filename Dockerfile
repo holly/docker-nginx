@@ -96,7 +96,6 @@ FROM ubuntu:latest AS nginx_executor
 ENV DEBIAN_FRONTEND=noninteractive
 ENV LS_COLORS=di=01;36
 COPY ./app/entrypoint.sh /app/entrypoint.sh
-COPY --from=njs_builder   /app/njs/build/njs /usr/bin/njs
 COPY --from=nginx_builder /usr/sbin/nginx /usr/sbin/nginx
 COPY --from=nginx_builder /usr/share/nginx /usr/share/nginx
 COPY --from=nginx_builder /usr/lib/nginx /usr/lib/nginx
