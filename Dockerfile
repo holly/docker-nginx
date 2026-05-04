@@ -118,3 +118,4 @@ RUN --mount=type=cache,target=/var/lib/apt/lists --mount=type=cache,target=/var/
  && ln -s /proc/self/fd/2 error.log  
 #CMD [ "/usr/sbin/nginx", "-g", "daemon off;" ]
 CMD [ "/app/entrypoint.sh" ]
+
