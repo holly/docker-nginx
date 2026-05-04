@@ -44,7 +44,7 @@ WORKDIR /app
 #RUN --mount=type=cache,target=/var/lib/apt/lists --mount=type=cache,target=/var/cache/apt/archives \
 # apt update \
 RUN apt update \
- && apt install -y --no-install-recommends  build-essential ca-certificates mercurial git libpcre2-dev libpcre3-dev libedit-dev \
+ && apt install -y --no-install-recommends  build-essential ca-certificates mercurial git libpcre2-dev libpcre3-dev libedit-dev libssl-dev \
 # && hg clone http://hg.nginx.org/njs \
  && git clone https://github.com/nginx/njs \
  && cd njs \
