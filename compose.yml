@@ -1,0 +1,37 @@
+services:
+  geoipupdate:
+    image: maxmind/geoipupdate:latest
+    env_file: .env.geoipupdate
+    volumes:
+      - geoipupdate_data:/usr/share/GeoIP
+    # Run once and exit
+    restart: "no"
+
+  nginx:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    image: ${USER}/nginx:latest
+    container_name: docker-nginx
+    ports:
+      - "80:80"
+      - "443:443/tcp"
+      - "443:443/udp"
+    volumes:
+      # Bind mounts for runtime configuration
+      #- ./nginx/volume/etc/nginx/vhosts.d:/etc/nginx/vhosts.d
+      #- ./nginx/volume/etc/nginx/njs:/etc/nginx/njs
+      #- ./nginx/volume/var/nginx/vhosts:/var/nginx/vhosts
+      # Named volume for GeoIP databases
+      - geoipupdate_data:/usr/share/GeoIP
+    depends_on:
+      geoipupdate:
+        condition: service_completed_successfully
+        required: true
+    stdin_open: true
+    tty: true
+    restart: unless-stopped
+
+volumes:
+  geoipupdate_data:
+    driver: local
