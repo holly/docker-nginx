@@ -37,6 +37,20 @@ RUN apt update \
  && git clone --recursive https://github.com/openssl/openssl 
 
 
+FROM ubuntu:latest AS njs_builder
+ENV DEBIAN_FRONTEND=noninteractive
+ENV LS_COLORS=di=01;36
+COPY --from=openssl_builder /app/openssl /app/openssl
+WORKDIR /app
+RUN apt update \
+ && apt install -y --no-install-recommends build-essential ca-certificates git libpcre2-dev libpcre3-dev libedit-dev \
+ && git clone https://github.com/nginx/njs \
+ && cd njs \
+ && ./configure --with-openssl=../openssl \
+ && make \
+ && make njs \
+ && cd ../
+
 FROM ubuntu:latest AS dhparam_builder
 ENV DEBIAN_FRONTEND=noninteractive
 ENV LS_COLORS=di=01;36
@@ -54,6 +68,7 @@ ENV LS_COLORS=di=01;36
 COPY --from=geoip2_builder /app/ngx_http_geoip2_module /app/ngx_http_geoip2_module
 COPY --from=brotli_builder /app/ngx_brotli /app/ngx_brotli
 COPY --from=openssl_builder /app/openssl /app/openssl
+COPY --from=njs_builder /app/njs /app/njs
 COPY ./app/nginx.conf /app/nginx.conf
 COPY ./app/modules.conf /app/modules.conf
 COPY ./app/modules.d /app/modules.d
