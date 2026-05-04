@@ -1,6 +1,6 @@
 FROM ubuntu:latest AS geoip2_builder
-ENV DEBIAN_FRONTEND noninteractive
-ENV LS_COLORS di=01;36
+ENV DEBIAN_FRONTEND=noninteractive
+ENV LS_COLORS=di=01;36
 WORKDIR /app
 #RUN --mount=type=cache,target=/var/lib/apt/lists --mount=type=cache,target=/var/cache/apt/archives \
 # apt update \
@@ -10,8 +10,8 @@ RUN apt update \
 
 
 FROM ubuntu:latest AS brotli_builder
-ENV DEBIAN_FRONTEND noninteractive
-ENV LS_COLORS di=01;36
+ENV DEBIAN_FRONTEND=noninteractive
+ENV LS_COLORS=di=01;36
 WORKDIR /app
 #RUN --mount=type=cache,target=/var/lib/apt/lists --mount=type=cache,target=/var/cache/apt/archives \
 # apt update \
@@ -27,8 +27,8 @@ RUN apt update \
 
 
 FROM ubuntu:latest AS openssl_builder
-ENV DEBIAN_FRONTEND noninteractive
-ENV LS_COLORS di=01;36
+ENV DEBIAN_FRONTEND=noninteractive
+ENV LS_COLORS=di=01;36
 WORKDIR /app
 #RUN --mount=type=cache,target=/var/lib/apt/lists --mount=type=cache,target=/var/cache/apt/archives \
 # apt update \
@@ -38,8 +38,8 @@ RUN apt update \
 
 
 FROM ubuntu:latest AS njs_builder
-ENV DEBIAN_FRONTEND noninteractive
-ENV LS_COLORS di=01;36
+ENV DEBIAN_FRONTEND=noninteractive
+ENV LS_COLORS=di=01;36
 WORKDIR /app
 #RUN --mount=type=cache,target=/var/lib/apt/lists --mount=type=cache,target=/var/cache/apt/archives \
 # apt update \
@@ -54,8 +54,8 @@ RUN apt update \
  && cd ../
 
 FROM ubuntu:latest AS dhparam_builder
-ENV DEBIAN_FRONTEND noninteractive
-ENV LS_COLORS di=01;36
+ENV DEBIAN_FRONTEND=noninteractive
+ENV LS_COLORS=di=01;36
 WORKDIR /app
 #RUN --mount=type=cache,target=/var/lib/apt/lists --mount=type=cache,target=/var/cache/apt/archives \
 # apt update \
@@ -65,8 +65,8 @@ RUN apt update \
  && openssl rand -out quic_host_key 16
 
 FROM ubuntu:latest AS nginx_builder
-ENV DEBIAN_FRONTEND noninteractive
-ENV LS_COLORS di=01;36
+ENV DEBIAN_FRONTEND=noninteractive
+ENV LS_COLORS=di=01;36
 COPY --from=geoip2_builder /app/ngx_http_geoip2_module /app/ngx_http_geoip2_module
 COPY --from=brotli_builder /app/ngx_brotli /app/ngx_brotli
 COPY --from=openssl_builder /app/openssl /app/openssl
@@ -108,8 +108,8 @@ RUN --mount=type=cache,target=/var/lib/apt/lists --mount=type=cache,target=/var/
 
 
 FROM ubuntu:latest AS nginx_executor
-ENV DEBIAN_FRONTEND noninteractive
-ENV LS_COLORS di=01;36
+ENV DEBIAN_FRONTEND=noninteractive
+ENV LS_COLORS=di=01;36
 COPY ./app/entrypoint.sh /app/entrypoint.sh
 COPY --from=njs_builder   /app/njs/build/njs /usr/bin/njs
 COPY --from=nginx_builder /usr/sbin/nginx /usr/sbin/nginx
