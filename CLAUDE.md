@@ -17,10 +17,20 @@
 
 ## コマンド
 
+### シェルスクリプト
+
 ```bash
 ./build.sh   # Docker イメージを $USER/nginx:latest としてビルド
 ./push.sh    # イメージをレジストリにプッシュ
 ./run.sh     # GeoIP データベース更新（geoipupdate.env 必須）、コンテナ起動
+```
+
+### Docker Compose（推奨）
+
+```bash
+docker-compose up --profile geoip    # ビルド + GeoIP更新 + 実行
+docker-compose up                    # ビルド + 実行（GeoIP無し）
+docker-compose down                  # 停止・削除
 ```
 
 @.claude/commands/build.md — build.sh の詳細（ビルドプロセス、トラブルシューティング）
@@ -30,6 +40,8 @@
 @.claude/commands/push.md — push.sh の詳細（レジストリプッシュ、認証設定）
 
 @.claude/commands/run.md — run.sh の詳細（GeoIP 更新、ポートマッピング、ライフサイクル）
+
+@.claude/commands/docker-compose.md — Docker Compose でのビルド・実行（build.sh + run.sh統合）
 
 @.claude/skills/commitizen-commit/SKILL.md — Commitizen形式でコミット（type/scope/subject確認、プロジェクト固有scope）
 
