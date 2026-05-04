@@ -23,6 +23,14 @@
 ./run.sh     # GeoIP データベース更新（geoipupdate.env 必須）、コンテナ起動
 ```
 
+@.claude/commands/build.md — build.sh の詳細（ビルドプロセス、トラブルシューティング）
+
+@.claude/commands/push.md — push.sh の詳細（レジストリプッシュ、認証設定）
+
+@.claude/commands/run.md — run.sh の詳細（GeoIP 更新、ポートマッピング、ライフサイクル）
+
+@.claude/skills/commitizen-commit/SKILL.md — Commitizen形式でコミット（type/scope/subject確認、プロジェクト固有scope）
+
 ---
 
 ## 設定規約
