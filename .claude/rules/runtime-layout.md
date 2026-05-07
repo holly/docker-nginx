@@ -11,11 +11,11 @@ description: ランタイム設定ディレクトリ構造とバインドマウ�
 app/
 ├── entrypoint.sh          # コンテナ起動スクリプト（nginx を前景で実行、24h 自動リロードループ）
 ├── nginx.conf             # メイン設定：ワーカーチューニング、LTSV ログ形式、GeoIP フィールド、vhost インクルード
-├── modules.conf           # 動的モジュール 4 つをロード（startup 時）
-├── modules.d/
+├── modules.conf           # 動的モジュール 4 つをロード（brotli filter/static、njs、geoip2）
+├── modules.d/             # モジュール固有の設定（nginx.conf の http コンテキストで include）
 │   ├── brotli.conf        # Brotli 圧縮レベル 7、静的 .br ファイル配信、MIME タイプ拡張
 │   └── geoip2.conf        # MaxMind .mmdb データベース 3 つの変数マッピング（auto-reload 5min）
-└── conf.d/
+└── conf.d/                # vhost から個別に include して使う設定スニペット
     ├── ssl.conf           # TLSv1.2/1.3 のみ、0-RTT 有効、強力暗号スイート、4096-bit DH param
     ├── default_header.conf # セキュリティヘッダー（CSP、X-Frame-Options、Referrer-Policy など）
     └── resolver.conf      # Cloudflare DNS resolver（1.1.1.1、1.0.0.1、2s タイムアウト）
@@ -23,7 +23,7 @@ app/
 
 ## ランタイムバインドマウント
 
-以下は `run.sh` で指定されるバインドマウント。イメージに焼き込まれず、実行時に動的に提供される：
+`compose.yml` または `run.sh` でマウント設定できるバインドマウント。イメージに焼き込まれず、実行時に動的に提供される：
 
 ```
 ./nginx/volume/etc/nginx/vhosts.d  → /etc/nginx/vhosts.d   # カスタム vhost 定義
@@ -31,7 +31,28 @@ app/
 ./nginx/volume/var/nginx/vhosts    → /var/nginx/vhosts     # Web root ディレクトリ
 ```
 
-**利点：** イメージ再ビルドなしで vhost・スクリプト・静的ファイルを更新可能
+### conf.d スニペットの使い方
+
+`/etc/nginx/conf.d/` には以下が事前設置されている（vhost の `server {}` ブロック内から個別に include）：
+
+| ファイル | 用途 | vhost での include 例 |
+|---|---|---|
+| `ssl.conf` | TLS 設定（プロトコル、暗号スイート、DHParam） | `include /etc/nginx/conf.d/ssl.conf;` |
+| `resolver.conf` | DNS リゾルバ設定（Cloudflare） | `include /etc/nginx/conf.d/resolver.conf;` |
+| `default_header.conf` | セキュリティヘッダー（CSP、X-Frame-Options） | `include /etc/nginx/conf.d/default_header.conf;` |
+
+### バインドマウント有効化の例
+
+`compose.yml` の場合：
+```yaml
+volumes:
+  - ./nginx/volume/etc/nginx/vhosts.d:/etc/nginx/vhosts.d
+  - ./nginx/volume/etc/nginx/njs:/etc/nginx/njs
+  - ./nginx/volume/var/nginx/vhosts:/var/nginx/vhosts
+  - geoipupdate_data:/usr/share/GeoIP
+```
+
+**利点：** イメージ再ビルドなしで vhost・スクリプト・静的ファイル・セキュリティ設定を更新可能
 
 ## 名前付きボリューム
 
@@ -57,7 +78,8 @@ app/
 
 ## 編集時の留意点
 
-- `app/nginx.conf` 変更後は `nginx -s reload` を手動実行（entrypoint.sh の 24h ループでは遅延）
-- `modules.d/*.conf`・`conf.d/*.conf` は `app/nginx.conf` の `include` で読み込まれるため、ファイル形式・シンタックスエラーが全体に波及
-- バインドマウント側のファイル（`./nginx/volume/`）を編集した際も、nginx の reload が必要な場合がある
-- GeoIP ボリュームが存在しない場合、geoip2 モジュールはエラーログを出力するが nginx は起動する（graceful degradation）
+- **nginx.conf 変更** — `app/nginx.conf` を編集後は `nginx -s reload` を手動実行（entrypoint.sh の 24h ループでは遅延）
+- **modules.d/*.conf の影響範囲** — `modules.d/*.conf` は `nginx.conf` の `http {}` コンテキストで include されるため、ファイル形式・シンタックスエラーが全体に波及
+- **conf.d/*.conf は vhost 依存** — `/etc/nginx/conf.d/` のファイルは nginx.conf では include されない。各 vhost の `server {}` ブロック内で明示的に `include /etc/nginx/conf.d/ssl.conf;` のように参照する設計
+- **バインドマウント側の更新** — `./nginx/volume/` 配下のファイル（vhost 定義・njs スクリプト・Web root）を編集した際も、変更内容によっては nginx の reload が必要な場合がある
+- **GeoIP ボリューム欠落** — `geoipupdate_data` が存在しない場合、geoip2 モジュールはエラーログを出力するが nginx は起動する（graceful degradation）。GeoIP 変数は undefined となる

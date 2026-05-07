@@ -25,7 +25,14 @@
 ### 2. 実行
 
 ```bash
-# GeoIP データベース更新 + コンテナ起動
+# Docker Compose（推奨）
+docker compose up
+```
+
+または
+
+```bash
+# シェルスクリプト
 ./run.sh
 ```
 
@@ -67,26 +74,84 @@ curl -i --http3 https://localhost/ --insecure
 
 ## 設定
 
-### バインドマウント（実行時に動的提供）
-
-イメージ再ビルドなしに設定を更新可能：
-
-```bash
-./nginx/volume/etc/nginx/vhosts.d/    # カスタム vhost 定義
-./nginx/volume/etc/nginx/njs/         # njs スクリプト
-./nginx/volume/var/nginx/vhosts/      # Web root
-```
-
 ### 設定ファイル（イメージに焼き込み）
 
 ```
 app/nginx.conf              # メイン設定
-app/modules.conf            # 動的モジュール読み込み
-app/modules.d/brotli.conf   # Brotli 設定
-app/modules.d/geoip2.conf   # GeoIP2 設定
-app/conf.d/ssl.conf         # TLS 設定
-app/conf.d/default_header.conf  # セキュリティヘッダー
-app/conf.d/resolver.conf    # DNS resolver（Cloudflare）
+app/modules.conf            # 動的モジュール読み込み（4つの .so をロード）
+app/modules.d/              # モジュール固有の設定
+  ├── brotli.conf           # Brotli 圧縮設定（レベル 7、MIME タイプ）
+  └── geoip2.conf           # GeoIP2 変数マッピング（Country/City/ASN）
+app/conf.d/                 # vhost から include して使う設定スニペット
+  ├── ssl.conf              # TLSv1.2/1.3、暗号スイート、DHParam、0-RTT
+  ├── default_header.conf   # CSP、X-Frame-Options、Referrer-Policy 等
+  └── resolver.conf         # Cloudflare DNS resolver
+```
+
+### バインドマウント（実行時に動的提供）
+
+イメージ再ビルドなしに設定を更新可能。`compose.yml` または `run.sh` でボリュームマウントを有効化します。
+
+#### ディレクトリ構成例
+
+```
+./nginx/volume/
+├── etc/nginx/
+│   ├── vhosts.d/              → /etc/nginx/vhosts.d/
+│   │   └── example.com.conf   # 仮想ホスト定義（下記サンプル参照）
+│   └── njs/                   → /etc/nginx/njs/
+│       └── auth.js            # njs スクリプト（js_import で読み込む）
+└── var/nginx/vhosts/          → /var/nginx/vhosts/
+    └── example.com/
+        └── index.html         # Web ルート
+```
+
+#### vhost サンプル（`vhosts.d/example.com.conf`）
+
+```nginx
+server {
+    listen 443 ssl http2;
+    server_name example.com;
+
+    # /etc/nginx/conf.d/ の設定スニペット群を個別に include
+    include /etc/nginx/conf.d/ssl.conf;
+    include /etc/nginx/conf.d/resolver.conf;
+    include /etc/nginx/conf.d/default_header.conf;
+
+    ssl_certificate     /etc/nginx/ssl/fullchain.pem;
+    ssl_certificate_key /etc/nginx/ssl/privkey.pem;
+
+    root /var/nginx/vhosts/example.com;
+    index index.html;
+
+    location / {
+        try_files $uri $uri/ =404;
+    }
+}
+```
+
+#### Docker Compose での有効化
+
+`compose.yml` のボリュームをコメント解除：
+
+```yaml
+volumes:
+  - ./nginx/volume/etc/nginx/vhosts.d:/etc/nginx/vhosts.d
+  - ./nginx/volume/etc/nginx/njs:/etc/nginx/njs
+  - ./nginx/volume/var/nginx/vhosts:/var/nginx/vhosts
+  - geoipupdate_data:/usr/share/GeoIP
+```
+
+#### シェルスクリプト（`run.sh`）での有効化
+
+```bash
+docker run -d \
+  -p 80:80 -p 443:443/tcp -p 443:443/udp \
+  -v ./nginx/volume/etc/nginx/vhosts.d:/etc/nginx/vhosts.d \
+  -v ./nginx/volume/etc/nginx/njs:/etc/nginx/njs \
+  -v ./nginx/volume/var/nginx/vhosts:/var/nginx/vhosts \
+  -v geoipupdate_data:/usr/share/GeoIP \
+  $USER/nginx:latest
 ```
 
 ## アーキテクチャ
@@ -95,15 +160,15 @@ app/conf.d/resolver.conf    # DNS resolver（Cloudflare）
 
 7 つの独立ステージで各依存関係をコンパイル：
 
-| ステージ | 成果物 |
-|---|---|
-| geoip2_builder | GeoIP2 モジュール |
-| brotli_builder | brotli ライブラリ + nginx モジュール |
-| openssl_builder | OpenSSL（QUIC/HTTP3 対応） |
-| njs_builder | njs スクリプティングモジュール |
-| dhparam_builder | 4096-bit DH パラメータ + QUIC ホストキー |
-| nginx_builder | freenginx バイナリ（モジュール統合） |
-| nginx_executor | 最小限ランタイムイメージ |
+| ステージ | 主な処理 | 出力 |
+|---|---|---|
+| openssl_builder | OpenSSL 3.6.2 をソースからコンパイル | OpenSSL ソースツリー |
+| geoip2_builder | GitHub からモジュールソースをクローン | ngx_http_geoip2_module/ |
+| brotli_builder | brotli ライブラリ + nginx モジュール（-Ofast -march=native） | 静的ライブラリ + .so |
+| njs_builder | njs スクリプティングモジュール configure | njs ソースツリー |
+| dhparam_builder | DHParam 取得（RFC 7919）+ QUIC キー生成 | dhparam.pem、quic_host_key |
+| nginx_builder | freenginx ビルド（全モジュール統合） | nginx バイナリ + .so |
+| nginx_executor | ランタイムミニマル構成 | 実行イメージ + njs CLI バイナリ |
 
 ## トラブルシューティング
 

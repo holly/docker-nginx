@@ -28,9 +28,9 @@
 ### Docker Compose（推奨）
 
 ```bash
-docker-compose up --profile geoip    # ビルド + GeoIP更新 + 実行
-docker-compose up                    # ビルド + 実行（GeoIP無し）
-docker-compose down                  # 停止・削除
+docker compose up        # ビルド + GeoIP更新 + 実行（geoipupdate が自動で先に起動）
+docker compose up --no-build  # 既存イメージで実行
+docker compose down      # 停止・削除
 ```
 
 @.claude/commands/build.md — build.sh の詳細（ビルドプロセス、トラブルシューティング）
