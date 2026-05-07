@@ -12,8 +12,8 @@ docker compose up
 
 この場合：
 1. nginx イメージをビルド
-2. geoipupdate コンテナを実行（GeoIP データベース取得）
-3. geoipupdate 完了後、自動的に nginx コンテナを起動
+2. geoipupdate コンテナを常時稼働（GeoIP データベース取得、72 時間ごとに定期更新）
+3. geoipupdate が健康状態（healthy）になった時点で nginx コンテナを起動
 
 **前提条件：** `.env` ファイルが存在し、MaxMind 認証情報が設定されていること
 
@@ -21,6 +21,7 @@ docker compose up
 GEOIPUPDATE_ACCOUNT_ID=your_account_id
 GEOIPUPDATE_LICENSE_KEY=your_license_key
 GEOIPUPDATE_EDITION_IDS=GeoLite2-ASN GeoLite2-City GeoLite2-Country
+GEOIPUPDATE_FREQUENCY=72
 OPENSSL_VERSION=3.6.2
 ```
 
@@ -37,19 +38,21 @@ docker build -t $USER/nginx:latest -f Dockerfile .
 - DH パラメータ・QUIC ホストキー取得
 - nginx バイナリ生成
 
-### 2. GeoIP 更新フェーズ
+### 2. GeoIP 更新フェーズ（常時稼働デーモン）
 
 ```bash
-ghcr.io/maxmind/geoipupdate:latest (compose.yml より)
+ghcr.io/maxmind/geoipupdate:latest (compose.yml より、restart: unless-stopped)
 ```
 
-- `.env` から認証情報・OpenSSL バージョン読み込み
+- `.env` から認証情報を読み込み
 - GeoLite2 データベース 3 つをダウンロード
   - `GeoLite2-Country.mmdb`
   - `GeoLite2-City.mmdb`
   - `GeoLite2-ASN.mmdb`
 - `geoipupdate_data` 名前付きボリュームに保存
-- 完了後、自動的に nginx コンテナ開始
+- **72 時間ごとに自動更新**（`GEOIPUPDATE_FREQUENCY` で制御）
+- 公式イメージの healthcheck で更新状態を監視
+- nginx は geoipupdate が healthy になった時点で起動
 
 ### 3. Nginx 実行フェーズ
 
