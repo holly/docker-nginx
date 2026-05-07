@@ -2,10 +2,11 @@ services:
   geoipupdate:
     image: ghcr.io/maxmind/geoipupdate:latest
     env_file: .env
+    environment:
+      GEOIPUPDATE_FREQUENCY: ${GEOIPUPDATE_FREQUENCY:-72}
     volumes:
       - geoipupdate_data:/usr/share/GeoIP
-    # Run once and exit
-    restart: "no"
+    restart: unless-stopped
 
   nginx:
     build:
@@ -28,7 +29,8 @@ services:
       - geoipupdate_data:/usr/share/GeoIP
     depends_on:
       geoipupdate:
-        condition: service_completed_successfully
+        # condition: service_completed_successfully
+        condition: service_healthy
         required: true
     stdin_open: true
     tty: true
