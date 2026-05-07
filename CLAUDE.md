@@ -22,7 +22,7 @@
 ```bash
 ./build.sh   # Docker イメージを $USER/nginx:latest としてビルド
 ./push.sh    # イメージをレジストリにプッシュ
-./run.sh     # GeoIP データベース更新（geoipupdate.env 必須）、コンテナ起動
+./run.sh     # GeoIP データベース更新（.env.geoipupdate 必須）、コンテナ起動
 ```
 
 ### Docker Compose（推奨）

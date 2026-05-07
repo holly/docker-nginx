@@ -62,7 +62,7 @@ volumes:
 - `GeoLite2-City.mmdb` — 都市、大陸、地域、郵便番号、緯度経度、タイムゾーン
 - `GeoLite2-ASN.mmdb` — ASN 番号、組織名（auto-reload 5min）
 
-**更新：** `run.sh` の MaxMind アップデーターコンテナが `./geoipupdate.env`（認証情報）を読み込んで更新
+**更新：** `run.sh` / `compose.yml` の MaxMind アップデーターコンテナが `./.env.geoipupdate`（認証情報）を読み込んで更新
 
 ## 設計上の重要な制約
 
