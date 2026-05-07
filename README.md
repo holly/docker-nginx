@@ -90,6 +90,7 @@ vim .env
 | `GEOIPUPDATE_ACCOUNT_ID` | MaxMind アカウント ID | geoipupdate コンテナ |
 | `GEOIPUPDATE_LICENSE_KEY` | MaxMind ライセンスキー | geoipupdate コンテナ |
 | `GEOIPUPDATE_EDITION_IDS` | ダウンロードする GeoIP DB | geoipupdate コンテナ |
+| `GEOIPUPDATE_FREQUENCY` | GeoIP DB 更新頻度（時間）。デフォルト: 72（3 日） | geoipupdate コンテナの定期更新 |
 
 ### 使用方法
 
@@ -120,6 +121,32 @@ OPENSSL_VERSION=3.7.0 ./build.sh
 # .env は自動で読み込まれないため手動でエクスポート
 export $(cat .env | grep -v '^#' | xargs)
 ./run.sh
+```
+
+### GeoIP データベースの定期更新
+
+geoipupdate コンテナは `GEOIPUPDATE_FREQUENCY` で指定された間隔（デフォルト 72 時間）ごとに GeoLite2 データベースを自動更新します。
+
+**動作：**
+1. コンテナ起動時に初回ダウンロード
+2. 指定間隔ごとに更新を確認
+3. 公式イメージの healthcheck で更新状態を監視
+
+**更新頻度の変更：**
+```bash
+# .env ファイルで指定
+GEOIPUPDATE_FREQUENCY=24  # 24時間ごとに更新
+
+# またはコマンドラインで上書き
+GEOIPUPDATE_FREQUENCY=24 docker compose up
+```
+
+**健全性確認：**
+```bash
+docker compose ps
+
+# geoipupdate が (healthy) / (unhealthy) を確認
+# healthy = 全 edition が指定間隔内に更新済み
 ```
 
 ### .env の管理
