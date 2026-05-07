@@ -33,31 +33,11 @@ docker compose up
 
 ```bash
 # シェルスクリプト
+export $(cat .env | grep -v '^#' | xargs)
 ./run.sh
 ```
 
-**前提条件：** MaxMind 認証情報ファイル `.env.geoipupdate`
-
-#### 方法 A：`.env.geoipupdate` ファイルで指定（compose.yml の推奨方法）
-
-```bash
-cat > .env.geoipupdate <<'EOF'
-GEOIPUPDATE_ACCOUNT_ID=your_account_id
-GEOIPUPDATE_LICENSE_KEY=your_license_key
-GEOIPUPDATE_EDITION_IDS=GeoLite2-ASN GeoLite2-City GeoLite2-Country
-EOF
-chmod 600 .env.geoipupdate
-docker compose up
-```
-
-#### 方法 B：環境変数で直接指定（ファイルなし）
-
-```bash
-GEOIPUPDATE_ACCOUNT_ID=your_id \
-GEOIPUPDATE_LICENSE_KEY=your_key \
-GEOIPUPDATE_EDITION_IDS="GeoLite2-ASN GeoLite2-City GeoLite2-Country" \
-docker compose up
-```
+詳細は「環境変数管理」セクションを参照してください。
 
 ### 3. テスト
 
@@ -251,11 +231,11 @@ docker run -d \
 ### GeoIP データ取得エラー
 
 ```bash
-# .env.geoipupdate が存在するか確認
-ls -la .env.geoipupdate
+# .env が存在するか確認
+ls -la .env
 
 # MaxMind 認証情報を確認
-cat .env.geoipupdate
+cat .env
 ```
 
 ### HTTP/3 が動作しない

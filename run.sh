@@ -8,7 +8,7 @@ set -C
 APP=$(basename $PWD | sed -e 's/^docker\-//')
 TAG="$USER/$APP"
 
-docker run --env-file ./.env.geoipupdate -v geoipupdate_data:/usr/share/GeoIP --rm -it ghcr.io/maxmind/geoipupdate:latest
+docker run --env-file ./.env -v geoipupdate_data:/usr/share/GeoIP --rm -it ghcr.io/maxmind/geoipupdate:latest
 
 docker run \
     -p 80:80 \
