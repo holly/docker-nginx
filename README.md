@@ -217,6 +217,48 @@ docker system prune -a
 ./build.sh
 ```
 
+### OpenSSL バージョンを変更したい場合
+
+デフォルトは `OPENSSL_VERSION=3.6.2` です。セキュリティ更新が必要な場合は以下を確認してください。
+
+**重要：breaking changes の確認**
+
+OpenSSL 4.0.0 以降では、deprecated EVP_* API（`EVP_CIPHER`、`EVP_MD`、`EVP_PKEY`、`EVP_PKEY_ASN1` のカスタム実装）が削除されています。nginx・njs の互換性確認が必須です。
+
+参考：https://github.com/openssl/openssl/releases/tag/openssl-4.0.0
+
+**バージョンアップ手順：**
+
+1. **Dockerfile を編集**
+
+   ```dockerfile
+   ARG OPENSSL_VERSION=3.7.0  # または希望のバージョン（デフォルト: 3.6.2）
+   ```
+
+2. **ビルド**
+
+   ```bash
+   ./build.sh
+   ```
+
+3. **互換性テスト**
+
+   ```bash
+   # バージョン確認
+   docker run --rm $USER/nginx:latest nginx -V
+
+   # 起動確認
+   docker compose up
+
+   # SSL/TLS 動作確認
+   curl -i https://localhost/ --insecure
+
+   # njs モジュール確認（js_import を使う vhost で動作確認）
+   curl -i https://localhost/njs-test
+   ```
+
+   テストが通らない場合は、元のバージョン（3.6.2）に戻してください。
+
 詳細なエラー診断は [@.claude/skills/build-and-diagnose](/.claude/skills/build-and-diagnose/SKILL.md) を参照。
 
 ## 開発ガイダンス
