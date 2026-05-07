@@ -156,7 +156,7 @@ app/conf.d/                 # vhost から include して使う設定スニペ�
 │   ├── vhosts.d/              → /etc/nginx/vhosts.d/
 │   │   └── example.com.conf   # 仮想ホスト定義（下記サンプル参照）
 │   └── njs/                   → /etc/nginx/njs/
-│       └── auth.js            # njs スクリプト（js_import で読み込む）
+│       └── hello.js           # njs スクリプト例（js_import で読み込む）
 └── var/nginx/vhosts/          → /var/nginx/vhosts/
     └── example.com/
         └── index.html         # Web ルート
@@ -164,9 +164,14 @@ app/conf.d/                 # vhost から include して使う設定スニペ�
 
 #### vhost サンプル（`vhosts.d/example.com.conf`）
 
+HTTP/3 (QUIC) 対応の例：
+
 ```nginx
 server {
     listen 443 ssl http2;
+    listen 443 ssl http3;
+    http3_max_field_size 16k;
+    
     server_name example.com;
 
     # /etc/nginx/conf.d/ の設定スニペット群を個別に include
@@ -177,13 +182,69 @@ server {
     ssl_certificate     /etc/nginx/ssl/fullchain.pem;
     ssl_certificate_key /etc/nginx/ssl/privkey.pem;
 
+    # njs スクリプト読み込み
+    js_path "/etc/nginx/njs/";
+    js_import hello from hello.js;
+
     root /var/nginx/vhosts/example.com;
     index index.html;
 
     location / {
         try_files $uri $uri/ =404;
     }
+
+    # njs スクリプト例：HTTP API エンドポイント
+    location /api/hello {
+        js_content hello.hello;
+    }
 }
+```
+
+#### njs スクリプト例（`njs/hello.js`）
+
+```javascript
+export default {
+  hello: hello_handler,
+}
+
+function hello_handler(r) {
+  r.return(200, 'hello, njs\n')
+}
+```
+
+#### アクセス例
+
+HTTP/1.1 でアクセス：
+```bash
+curl -i https://example.com/api/hello --insecure
+```
+
+レスポンス：
+```
+HTTP/1.1 200 OK
+Server: nginx
+Date: Wed, 07 May 2026 12:34:56 GMT
+Content-Type: text/plain
+Content-Length: 12
+Connection: keep-alive
+
+hello, njs
+```
+
+HTTP/3 (QUIC) でアクセス：
+```bash
+curl -i --http3 https://example.com/api/hello --insecure
+```
+
+HTTP/3 レスポンス：
+```
+HTTP/3 200
+Server: nginx
+Date: Wed, 07 May 2026 12:34:56 GMT
+Content-Type: text/plain
+Content-Length: 12
+
+hello, njs
 ```
 
 #### Docker Compose での有効化
