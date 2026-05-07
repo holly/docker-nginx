@@ -15,11 +15,12 @@ docker compose up
 2. geoipupdate コンテナを実行（GeoIP データベース取得）
 3. geoipupdate 完了後、自動的に nginx コンテナを起動
 
-**前提条件：** `geoipupdate.env` ファイルが存在し、MaxMind 認証情報が設定されていること
+**前提条件：** `.env.geoipupdate` ファイルが存在し、MaxMind 認証情報が設定されていること
 
 ```env
 GEOIPUPDATE_ACCOUNT_ID=your_account_id
 GEOIPUPDATE_LICENSE_KEY=your_license_key
+GEOIPUPDATE_EDITION_IDS=GeoLite2-ASN GeoLite2-City GeoLite2-Country
 ```
 
 ## 処理内容
@@ -41,7 +42,7 @@ docker build -t $USER/nginx:latest -f Dockerfile .
 ghcr.io/maxmind/geoipupdate:latest (compose.yml より)
 ```
 
-- `geoipupdate.env` から認証情報読み込み
+- `.env.geoipupdate` から認証情報読み込み
 - GeoLite2 データベース 3 つをダウンロード
   - `GeoLite2-Country.mmdb`
   - `GeoLite2-City.mmdb`
@@ -158,17 +159,22 @@ docker compose down -v
 
 ## トラブルシューティング
 
-### geoipupdate.env がない場合
+### .env.geoipupdate がない場合
 
 ```bash
 # 作成
-echo 'GEOIPUPDATE_ACCOUNT_ID=your_id' > geoipupdate.env
-echo 'GEOIPUPDATE_LICENSE_KEY=your_key' >> geoipupdate.env
-chmod 600 geoipupdate.env
+cat > .env.geoipupdate <<'EOF'
+GEOIPUPDATE_ACCOUNT_ID=your_id
+GEOIPUPDATE_LICENSE_KEY=your_key
+GEOIPUPDATE_EDITION_IDS=GeoLite2-ASN GeoLite2-City GeoLite2-Country
+EOF
+chmod 600 .env.geoipupdate
 
 # 実行
 docker compose up
 ```
+
+詳細は公式 Docker Hub ページを参照：https://hub.docker.com/r/maxmindinc/geoipupdate
 
 ### GeoIP 更新に失敗した場合
 
