@@ -7,4 +7,9 @@ set -C
 
 APP=$(basename $PWD | sed -e 's/^docker\-//')
 TAG="$USER/$APP"
-docker build  -t ${TAG}:latest -f Dockerfile .
+OPENSSL_VERSION=${OPENSSL_VERSION:-3.6.2}
+
+docker build \
+  -t ${TAG}:latest \
+  --build-arg OPENSSL_VERSION=${OPENSSL_VERSION} \
+  -f Dockerfile .

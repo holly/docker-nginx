@@ -11,7 +11,7 @@ GeoIP データベースを更新してから、nginx コンテナをローカ�
 ## 前提条件
 
 - イメージがビルド済み：`./build.sh` を実行済み
-- MaxMind 認証情報ファイル：`./.env.geoipupdate` が存在すること
+- MaxMind 認証情報ファイル：`./.env` が存在すること
   ```env
   GEOIPUPDATE_ACCOUNT_ID=your_account_id
   GEOIPUPDATE_LICENSE_KEY=your_license_key
@@ -21,7 +21,7 @@ GeoIP データベースを更新してから、nginx コンテナをローカ�
 
 1. **GeoIP データベース更新**
    - MaxMind アップデーターコンテナを実行
-   - `.env.geoipupdate` から認証情報を読み込み
+   - `.env` から認証情報を読み込み
    - `geoipupdate_data` 名前付きボリュームに以下をダウンロード：
      - `GeoLite2-Country.mmdb`
      - `GeoLite2-City.mmdb`
@@ -46,14 +46,13 @@ GeoIP データベースを更新してから、nginx コンテナをローカ�
 
 ## トラブルシューティング
 
-**.env.geoipupdate がない場合：**
+**.env がない場合：**
 ```bash
-cat > .env.geoipupdate <<'EOF'
-GEOIPUPDATE_ACCOUNT_ID=your_id
-GEOIPUPDATE_LICENSE_KEY=your_key
-GEOIPUPDATE_EDITION_IDS=GeoLite2-ASN GeoLite2-City GeoLite2-Country
-EOF
-chmod 600 .env.geoipupdate
+cp .env.example .env
+
+# エディタで認証情報を設定
+vim .env
+# GEOIPUPDATE_ACCOUNT_ID と GEOIPUPDATE_LICENSE_KEY を編集
 ```
 
 **ポート競合エラー：**

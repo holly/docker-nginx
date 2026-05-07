@@ -1,7 +1,7 @@
 services:
   geoipupdate:
     image: ghcr.io/maxmind/geoipupdate:latest
-    env_file: .env.geoipupdate
+    env_file: .env
     volumes:
       - geoipupdate_data:/usr/share/GeoIP
     # Run once and exit
@@ -11,6 +11,8 @@ services:
     build:
       context: .
       dockerfile: Dockerfile
+      args:
+        OPENSSL_VERSION: ${OPENSSL_VERSION:-3.6.2}
     image: ${USER}/nginx:latest
     container_name: docker-nginx
     ports:

@@ -15,12 +15,13 @@ docker compose up
 2. geoipupdate コンテナを実行（GeoIP データベース取得）
 3. geoipupdate 完了後、自動的に nginx コンテナを起動
 
-**前提条件：** `.env.geoipupdate` ファイルが存在し、MaxMind 認証情報が設定されていること
+**前提条件：** `.env` ファイルが存在し、MaxMind 認証情報が設定されていること
 
 ```env
 GEOIPUPDATE_ACCOUNT_ID=your_account_id
 GEOIPUPDATE_LICENSE_KEY=your_license_key
 GEOIPUPDATE_EDITION_IDS=GeoLite2-ASN GeoLite2-City GeoLite2-Country
+OPENSSL_VERSION=3.6.2
 ```
 
 ## 処理内容
@@ -42,7 +43,7 @@ docker build -t $USER/nginx:latest -f Dockerfile .
 ghcr.io/maxmind/geoipupdate:latest (compose.yml より)
 ```
 
-- `.env.geoipupdate` から認証情報読み込み
+- `.env` から認証情報・OpenSSL バージョン読み込み
 - GeoLite2 データベース 3 つをダウンロード
   - `GeoLite2-Country.mmdb`
   - `GeoLite2-City.mmdb`
@@ -159,16 +160,15 @@ docker compose down -v
 
 ## トラブルシューティング
 
-### .env.geoipupdate がない場合
+### .env がない場合
 
 ```bash
-# 作成
-cat > .env.geoipupdate <<'EOF'
-GEOIPUPDATE_ACCOUNT_ID=your_id
-GEOIPUPDATE_LICENSE_KEY=your_key
-GEOIPUPDATE_EDITION_IDS=GeoLite2-ASN GeoLite2-City GeoLite2-Country
-EOF
-chmod 600 .env.geoipupdate
+# .env.example から .env を作成
+cp .env.example .env
+
+# エディタで認証情報を設定
+vim .env
+# GEOIPUPDATE_ACCOUNT_ID と GEOIPUPDATE_LICENSE_KEY を編集
 
 # 実行
 docker compose up

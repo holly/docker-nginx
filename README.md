@@ -88,6 +88,66 @@ curl -i --http3 https://localhost/ --insecure
 - `443/tcp` — HTTPS
 - `443/udp` — HTTP/3 (QUIC)
 
+## 環境変数管理
+
+すべての構成は `.env` ファイルで一元管理します。
+
+### セットアップ
+
+```bash
+# .env.example から .env を作成
+cp .env.example .env
+
+# エディタで認証情報・バージョンを設定
+vim .env
+```
+
+### .env に含まれる設定
+
+| 変数 | 説明 | 用途 |
+|---|---|---|
+| `OPENSSL_VERSION` | nginx ビルドに使う OpenSSL バージョン（デフォルト: 3.6.2） | `docker compose up` / `./build.sh` |
+| `GEOIPUPDATE_ACCOUNT_ID` | MaxMind アカウント ID | geoipupdate コンテナ |
+| `GEOIPUPDATE_LICENSE_KEY` | MaxMind ライセンスキー | geoipupdate コンテナ |
+| `GEOIPUPDATE_EDITION_IDS` | ダウンロードする GeoIP DB | geoipupdate コンテナ |
+
+### 使用方法
+
+#### 方法 A：docker compose（推奨）
+
+```bash
+# .env から全環境変数を自動読み込み
+docker compose up
+
+# バージョン指定でビルド（.env を上書き）
+OPENSSL_VERSION=3.7.0 docker compose up
+```
+
+#### 方法 B：./build.sh
+
+```bash
+# .env から環境変数を読み込んでビルド
+export $(cat .env | grep -v '^#' | xargs)
+./build.sh
+
+# または直接指定
+OPENSSL_VERSION=3.7.0 ./build.sh
+```
+
+#### 方法 C：./run.sh
+
+```bash
+# .env は自動で読み込まれないため手動でエクスポート
+export $(cat .env | grep -v '^#' | xargs)
+./run.sh
+```
+
+### .env の管理
+
+- `.env` は `.gitignore` で無視（個人の認証情報を保護）
+- リポジトリには `.env.example` のみコミット
+- 新しく clone したときは `cp .env.example .env` して設定を記入
+
 ## 設定
 
 ### 設定ファイル（イメージに焼き込み）
