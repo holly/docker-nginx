@@ -11,7 +11,7 @@ trap "$NGINX_CMD -s stop; echo nginx stopped." 1 2 3 15
 
 {
     while true; do
-        sleep $SLEEP_INTERVAL;
+        sleep $SLEEP_INTERVAL
         $NGINX_CMD -s reload
     done
 } &

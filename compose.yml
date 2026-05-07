@@ -1,6 +1,6 @@
 services:
   geoipupdate:
-    image: maxmind/geoipupdate:latest
+    image: ghcr.io/maxmind/geoipupdate:latest
     env_file: .env.geoipupdate
     volumes:
       - geoipupdate_data:/usr/share/GeoIP
